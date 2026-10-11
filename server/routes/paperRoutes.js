@@ -1,13 +1,13 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
 import {
-  getPapers, createPaper, getPaper, updatePaper, deletePaper,
+  getPapers, createPaper, getPaper, updatePaper, deletePaper, getTags,
 } from "../controllers/paperController.js";
 
 const router = express.Router();
+router.use(protect);
 
-router.use(protect); // is file ke SAARE routes ke liye login zaroori
-
+router.get("/tags", getTags); // ⚠️ /:id se PEHLE hona zaroori hai
 router.route("/").get(getPapers).post(createPaper);
 router.route("/:id").get(getPaper).put(updatePaper).delete(deletePaper);
 

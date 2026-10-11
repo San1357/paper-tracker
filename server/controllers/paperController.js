@@ -6,6 +6,11 @@ const ALLOWED = ["title", "authors", "abstract", "arxivId", "pdfUrl", "tags", "s
 const pick = (body) =>
   Object.fromEntries(Object.entries(body).filter(([key]) => ALLOWED.includes(key)));
 
+const STATUSES = ["to-read", "reading", "done"];
+
+// User ke input mein . * ( ) + jaise special characters ho to regex na toote
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // Paper dhundho, LEKIN sirf tab jab wo isi user ka ho
 const findOwnPaper = (id, userId) => {
   if (!mongoose.isValidObjectId(id)) return null;
@@ -19,11 +24,44 @@ const handleError = (res, err) => {
   res.status(500).json({ message: err.message });
 };
 
-// GET /api/papers → apne saare papers (naye pehle)
+// GET /api/papers?search=attention&tag=ai&status=reading
 export const getPapers = async (req, res) => {
   try {
-    const papers = await Paper.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const { search, tag, status } = req.query;
+    const filter = { user: req.user._id };
+
+    if (status) {
+      if (!STATUSES.includes(status)) {
+        return res.status(400).json({ message: "Status galat hai" });
+      }
+      filter.status = status;
+    }
+
+    if (tag) filter.tags = tag.trim().toLowerCase();
+
+    if (search?.trim()) {
+      const rx = new RegExp(escapeRegex(search.trim()), "i");
+      filter.$or = [
+        { title: rx },
+        { abstract: rx },
+        { authors: rx },
+        { notes: rx },
+        { tags: rx },
+      ];
+    }
+
+    const papers = await Paper.find(filter).sort({ createdAt: -1 });
     res.json(papers);
+  } catch (err) {
+    handleError(res, err);
+  }
+};
+
+// GET /api/papers/tags → user ke saare unique tags
+export const getTags = async (req, res) => {
+  try {
+    const tags = await Paper.distinct("tags", { user: req.user._id });
+    res.json(tags.sort());
   } catch (err) {
     handleError(res, err);
   }
@@ -53,7 +91,7 @@ export const getPaper = async (req, res) => {
   }
 };
 
-// PUT /api/papers/:id → update (notes, tags, status, etc.)
+// PUT /api/papers/:id → update
 export const updatePaper = async (req, res) => {
   try {
     const paper = await findOwnPaper(req.params.id, req.user._id);
