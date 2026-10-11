@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import AddPaper from "./pages/AddPaper";
+import PaperDetail from "./pages/PaperDetail";
 
 function Layout() {
   return (
@@ -25,7 +26,7 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/papers/new" element={<AddPaper />} />
-          <Route path="/papers/:id" element={<p className="p-6">Paper Detail: Part 4D</p>} />
+          <Route path="/papers/:id" element={<PaperDetail />} />
         </Route>
       </Route>
 
