@@ -20,6 +20,7 @@ export default function PaperDetail() {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [summarizing, setSummarizing] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -39,7 +40,7 @@ export default function PaperDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Koi bhi change backend pe bhejo
+  // Status, tags, notes backend pe bhejo
   const update = async (changes, successMsg) => {
     setError("");
     setMessage("");
@@ -52,6 +53,23 @@ export default function PaperDetail() {
       setError(err.response?.data?.message || "Save nahi hua");
     } finally {
       setSaving(false);
+    }
+  };
+
+  // AI summary banao (refresh = true → nayi summary)
+  const handleSummary = async (refresh = false) => {
+    setError("");
+    setMessage("");
+    setSummarizing(true);
+    try {
+      const { data } = await api.post(`/papers/${id}/summary`, null, {
+        params: refresh ? { refresh: 1 } : {},
+      });
+      applyPaper(data);
+    } catch (err) {
+      setError(err.response?.data?.message || "Summary nahi ban payi");
+    } finally {
+      setSummarizing(false);
     }
   };
 
@@ -134,6 +152,38 @@ export default function PaperDetail() {
         </div>
       )}
 
+      {/* AI Summary */}
+      <div className="bg-white border rounded-lg p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-medium">✨ AI Summary</h2>
+          {paper.summary && (
+            <button
+              onClick={() => handleSummary(true)}
+              disabled={summarizing}
+              className="text-sm text-blue-600 disabled:opacity-50"
+            >
+              {summarizing ? "Generating..." : "↻ Regenerate"}
+            </button>
+          )}
+        </div>
+
+        {paper.summary ? (
+          <p className="text-gray-700 leading-relaxed whitespace-pre-line">{paper.summary}</p>
+        ) : !paper.abstract ? (
+          <p className="text-sm text-gray-500">
+            Summary ke liye abstract chahiye. arXiv se add kiye papers mein ye apne aap hota hai.
+          </p>
+        ) : (
+          <button
+            onClick={() => handleSummary(false)}
+            disabled={summarizing}
+            className="bg-purple-600 text-white px-4 py-2 rounded-md disabled:opacity-50"
+          >
+            {summarizing ? "Generating... (10–20 sec)" : "✨ Generate summary"}
+          </button>
+        )}
+      </div>
+
       {/* Tags + Notes: Save button se */}
       <div className="bg-white border rounded-lg p-5 space-y-4">
         <div>
@@ -163,7 +213,8 @@ export default function PaperDetail() {
       {/* Delete */}
       <div className="border border-red-200 rounded-lg p-5">
         <h2 className="font-medium text-red-700 mb-2">Danger zone</h2>
-        <button onClick={handleDelete} className="text-sm border border-red-600 text-red-600 px-4 py-2 rounded-md hover:bg-red-50">
+        <button onClick={handleDelete}
+          className="text-sm border border-red-600 text-red-600 px-4 py-2 rounded-md hover:bg-red-50">
           Delete paper
         </button>
       </div>

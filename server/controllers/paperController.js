@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Paper from "../models/Paper.js";
+import { summarizePaper } from "../services/ai.js";
 
 // Sirf ye fields user badal sakta hai (user ya summary nahi)
 const ALLOWED = ["title", "authors", "abstract", "arxivId", "pdfUrl", "tags", "status", "notes"];
@@ -113,5 +114,36 @@ export const deletePaper = async (req, res) => {
     res.json({ message: "Paper delete ho gaya" });
   } catch (err) {
     handleError(res, err);
+  }
+};
+
+// POST /api/papers/:id/summary         → summary banao (pehle se hai to wahi do)
+// POST /api/papers/:id/summary?refresh=1 → nayi summary banao
+export const generateSummary = async (req, res) => {
+  try {
+    const paper = await findOwnPaper(req.params.id, req.user._id);
+    if (!paper) return res.status(404).json({ message: "Paper nahi mila" });
+
+    if (!paper.abstract?.trim()) {
+      return res.status(400).json({ message: "Summary ke liye abstract chahiye" });
+    }
+
+    // Pehle se summary hai aur refresh nahi maanga → AI call mat karo
+    if (paper.summary && !req.query.refresh) {
+      return res.json(paper);
+    }
+
+    paper.summary = await summarizePaper({ title: paper.title, abstract: paper.abstract });
+    await paper.save();
+    res.json(paper);
+  } catch (err) {
+    if (err.status === 429) {
+      return res.status(429).json({ message: "AI ki limit khatam, 1 minute baad try karo" });
+    }
+    if (err.status === 503 || err.status === 500) {
+  return res.status(503).json({ message: "AI abhi busy hai, 1-2 minute baad try karo" });
+  }
+    console.error("AI error:", err.message);
+    res.status(500).json({ message: "Summary nahi ban payi: " + err.message });
   }
 };
