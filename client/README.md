@@ -1,16 +1,30 @@
-# React + Vite
+# 📄 Paper Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack app to save, organize, and understand research papers, with AI-generated summaries.
 
-Currently, two official plugins are available:
+🔗 **Live demo:** https://paper-tracker-xyz.vercel.app
+(Backend is on a free tier, so the first request may take ~30-60 seconds to wake up.)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
+- JWT authentication (register/login, protected routes)
+- Add papers by arXiv ID or link, with title, authors, and abstract auto-filled
+- AI summaries using Gemini, cached in MongoDB (repeat loads: ~4.6s → ~0.09s)
+- Retry with backoff and model fallback when the AI API is busy
+- Search across title, authors, abstract, notes, and tags (debounced)
+- Tag and reading-status filters
+- Per-user data isolation (users can only access their own papers)
 
-## React Compiler
+## Tech Stack
+**Frontend:** React, Vite, React Router, Tailwind CSS, Axios
+**Backend:** Node.js, Express, MongoDB (Mongoose), JWT, bcrypt
+**AI:** Google Gemini API
+**Deployment:** Vercel (frontend), Render (backend), MongoDB Atlas
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Screenshots
+<!-- Dashboard, Add Paper aur Paper Detail ke screenshots yahan -->
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Run Locally
+1. Clone the repo
+2. `server/`: copy `.env.example` to `.env` and fill values, then `npm install && npm run dev`
+3. `client/`: copy `.env.example` to `.env`, then `npm install && npm run dev`
+4. Open http://localhost:5173
