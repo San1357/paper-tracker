@@ -1,15 +1,17 @@
-const STYLES = {
-  "to-read": "bg-gray-100 text-gray-700",
-  reading: "bg-yellow-100 text-yellow-800",
-  done: "bg-green-100 text-green-800",
+import { Circle, Highlighter, CircleCheck } from "lucide-react";
+
+const STATUS = {
+  "to-read": { label: "To read", Icon: Circle, className: "text-ink-soft" },
+  reading: { label: "Reading", Icon: Highlighter, className: "text-amber-700" },
+  done: { label: "Done", Icon: CircleCheck, className: "text-pen" },
 };
 
-const LABELS = { "to-read": "To read", reading: "Reading", done: "Done" };
-
 export default function StatusBadge({ status }) {
+  const s = STATUS[status] || STATUS["to-read"];
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${STYLES[status] || STYLES["to-read"]}`}>
-      {LABELS[status] || status}
+    <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-sm font-medium ${s.className}`}>
+      <s.Icon size={15} aria-hidden="true" />
+      {s.label}
     </span>
   );
 }

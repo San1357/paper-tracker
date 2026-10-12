@@ -1,33 +1,57 @@
 import { Link } from "react-router-dom";
+import { Sparkles } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 
+const shortAuthors = (authors = []) =>
+  authors.length > 3 ? `${authors.slice(0, 3).join(", ")} et al.` : authors.join(", ");
+
+// arXiv ID "1706.03762" → 2017
+export const arxivYear = (id) => {
+  const match = id?.match(/^(\d{2})\d{2}\./);
+  return match ? 2000 + Number(match[1]) : null;
+};
+
 export default function PaperCard({ paper }) {
-  const authors =
-    paper.authors?.length > 3
-      ? `${paper.authors.slice(0, 3).join(", ")} et al.`
-      : paper.authors?.join(", ");
+  const authors = shortAuthors(paper.authors);
+  const year = arxivYear(paper.arxivId);
+  const byline = [authors, year && `(${year})`].filter(Boolean).join(" ");
+  const added = new Date(paper.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 
   return (
-    <Link
-      to={`/papers/${paper._id}`}
-      className="block bg-white border rounded-lg p-4 hover:shadow-md transition"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="font-medium">{paper.title}</h2>
-        <StatusBadge status={paper.status} />
-      </div>
-
-      {authors && <p className="text-sm text-gray-600 mt-1">{authors}</p>}
-
-      {paper.tags?.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-3">
-          {paper.tags.map((tag) => (
-            <span key={tag} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
-              #{tag}
+    <li>
+      <Link
+        to={`/papers/${paper._id}`}
+        className="group grid gap-x-6 gap-y-3 px-2 py-5 transition-colors hover:bg-white sm:grid-cols-[1fr_auto]"
+      >
+        <div className="min-w-0">
+          <h3 className="font-serif text-lg leading-snug sm:text-xl">
+            <span className={paper.status === "reading" ? "highlight" : "group-hover:text-pen"}>
+              {paper.title}
             </span>
-          ))}
+          </h3>
+
+          {byline && <p className="mt-1 text-sm text-ink-soft">{byline}</p>}
+
+          {(paper.tags.length > 0 || paper.summary) && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+              {paper.tags.map((tag) => (
+                <span key={tag} className="text-pen">#{tag}</span>
+              ))}
+              {paper.summary && (
+                <span className="inline-flex items-center gap-1 text-ink-soft">
+                  <Sparkles size={14} aria-hidden="true" />
+                  Summary ready
+                </span>
+              )}
+            </div>
+          )}
         </div>
-      )}
-    </Link>
+
+        <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:gap-1">
+          <StatusBadge status={paper.status} />
+          <span className="text-xs text-ink-soft">Added {added}</span>
+        </div>
+      </Link>
+    </li>
   );
 }
