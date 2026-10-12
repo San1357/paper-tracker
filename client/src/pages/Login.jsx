@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import AuthLayout from "../components/AuthLayout";
+
+export const networkError =
+  "Can't reach the server. If the app was idle, it can take up to a minute to wake up. Try again.";
 
 export default function Login() {
   const { login } = useAuth();
@@ -18,34 +22,41 @@ export default function Login() {
       await login(email, password);
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Kuch gadbad ho gayi");
+      setError(err.response ? err.response.data?.message || "Login failed." : networkError);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow w-full max-w-sm space-y-4">
-        <h1 className="text-2xl font-semibold">Login</h1>
-        {error && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>}
-        <input
-          type="email" placeholder="Email" required
-          value={email} onChange={(e) => setEmail(e.target.value)}
-          className="w-full border rounded-md px-3 py-2"
-        />
-        <input
-          type="password" placeholder="Password" required
-          value={password} onChange={(e) => setPassword(e.target.value)}
-          className="w-full border rounded-md px-3 py-2"
-        />
-        <button disabled={loading} className="w-full bg-blue-600 text-white py-2 rounded-md disabled:opacity-50">
-          {loading ? "Logging in..." : "Login"}
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Log in to see your reading list."
+      footer={
+        <>
+          New here?{" "}
+          <Link to="/register" className="font-medium text-pen hover:underline">
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && <p className="alert-error" role="alert">{error}</p>}
+        <div>
+          <label htmlFor="email" className="label">Email</label>
+          <input id="email" type="email" required autoComplete="email"
+            value={email} onChange={(e) => setEmail(e.target.value)} className="field" />
+        </div>
+        <div>
+          <label htmlFor="password" className="label">Password</label>
+          <input id="password" type="password" required autoComplete="current-password"
+            value={password} onChange={(e) => setPassword(e.target.value)} className="field" />
+        </div>
+        <button disabled={loading} className="btn btn-primary w-full py-2.5">
+          {loading ? "Logging in..." : "Log in"}
         </button>
-        <p className="text-sm text-center">
-          Account nahi hai? <Link to="/register" className="text-blue-600">Register karo</Link>
-        </p>
       </form>
-    </div>
+    </AuthLayout>
   );
 }

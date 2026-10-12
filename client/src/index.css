@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+/* Colors aur fonts: ab "bg-paper", "text-ink", "font-serif" jaisi classes kaam karengi */
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", Georgia, serif;
+
+  --color-paper: #f6f7f9;
+  --color-ink: #1b2340;
+  --color-ink-soft: #5b6478;
+  --color-pen: #2b4acb;
+  --color-pen-dark: #1f37a0;
+  --color-rule: #dde1e8;
+  --color-highlight: #ffe45c;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Keyboard se navigate karne walon ke liye saaf focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-pen);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-pen text-white hover:bg-pen-dark;
+  }
+  .btn-secondary {
+    @apply border border-rule bg-white text-ink hover:bg-paper;
+  }
+  .btn-danger {
+    @apply border border-red-300 bg-white text-red-700 hover:bg-red-50;
+  }
+  .field {
+    @apply w-full rounded-md border border-rule bg-white px-3 py-2 text-ink transition-colors placeholder:text-ink-soft/60;
+  }
+  .field:focus {
+    @apply border-pen outline-none ring-2 ring-pen/15;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+  .alert-error {
+    @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800;
+  }
+}
+
+/* Highlighter: text ke neeche wale hisse pe peela marker */
+.highlight {
+  background-image: linear-gradient(transparent 58%, rgb(255 228 92 / 0.85) 58%);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.highlight-dark {
+  background-image: linear-gradient(transparent 70%, rgb(255 228 92 / 0.45) 70%);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}

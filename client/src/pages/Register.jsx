@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import AuthLayout from "../components/AuthLayout";
+import { networkError } from "./Login";
 
 export default function Register() {
   const { register } = useAuth();
@@ -19,30 +21,45 @@ export default function Register() {
       await register(form.name, form.email, form.password);
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Kuch gadbad ho gayi");
+      setError(err.response ? err.response.data?.message || "Sign up failed." : networkError);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-xl shadow w-full max-w-sm space-y-4">
-        <h1 className="text-2xl font-semibold">Register</h1>
-        {error && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>}
-        <input name="name" placeholder="Name" required value={form.name}
-          onChange={handleChange} className="w-full border rounded-md px-3 py-2" />
-        <input name="email" type="email" placeholder="Email" required value={form.email}
-          onChange={handleChange} className="w-full border rounded-md px-3 py-2" />
-        <input name="password" type="password" placeholder="Password (min 6)" required minLength={6}
-          value={form.password} onChange={handleChange} className="w-full border rounded-md px-3 py-2" />
-        <button disabled={loading} className="w-full bg-blue-600 text-white py-2 rounded-md disabled:opacity-50">
-          {loading ? "Creating account..." : "Register"}
+    <AuthLayout
+      title="Create your account"
+      subtitle="Start a reading list in under a minute."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link to="/login" className="font-medium text-pen hover:underline">Log in</Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {error && <p className="alert-error" role="alert">{error}</p>}
+        <div>
+          <label htmlFor="name" className="label">Name</label>
+          <input id="name" name="name" required autoComplete="name"
+            value={form.name} onChange={handleChange} className="field" />
+        </div>
+        <div>
+          <label htmlFor="email" className="label">Email</label>
+          <input id="email" name="email" type="email" required autoComplete="email"
+            value={form.email} onChange={handleChange} className="field" />
+        </div>
+        <div>
+          <label htmlFor="password" className="label">Password</label>
+          <input id="password" name="password" type="password" required minLength={6}
+            autoComplete="new-password" value={form.password} onChange={handleChange} className="field" />
+          <p className="mt-1.5 text-xs text-ink-soft">At least 6 characters.</p>
+        </div>
+        <button disabled={loading} className="btn btn-primary w-full py-2.5">
+          {loading ? "Creating account..." : "Create account"}
         </button>
-        <p className="text-sm text-center">
-          Pehle se account hai? <Link to="/login" className="text-blue-600">Login karo</Link>
-        </p>
       </form>
-    </div>
+    </AuthLayout>
   );
 }
