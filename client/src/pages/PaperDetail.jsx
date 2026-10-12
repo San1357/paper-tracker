@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft, ExternalLink, FileText, Sparkles, RefreshCw, Trash2 } from "lucide-react";
 import api from "../api";
 import StatusBadge from "../components/StatusBadge";
 
-const STATUSES = [
-  { key: "to-read", label: "To read" },
-  { key: "reading", label: "Reading" },
-  { key: "done", label: "Done" },
-];
-
+const STATUSES = ["to-read", "reading", "done"];
 const splitList = (text) => text.split(",").map((s) => s.trim()).filter(Boolean);
+
+function BackLink() {
+  return (
+    <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-ink-soft hover:text-ink">
+      <ArrowLeft size={16} aria-hidden="true" />
+      Reading list
+    </Link>
+  );
+}
 
 export default function PaperDetail() {
   const { id } = useParams();
@@ -22,44 +27,39 @@ export default function PaperDetail() {
   const [saving, setSaving] = useState(false);
   const [summarizing, setSummarizing] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [saved, setSaved] = useState(false);
 
-  // Server se aaye paper ko screen pe set karo
   const applyPaper = (data) => {
     setPaper(data);
     setTags(data.tags.join(", "));
     setNotes(data.notes || "");
   };
 
-  // Page khulte hi paper load karo
   useEffect(() => {
     api
       .get(`/papers/${id}`)
       .then((res) => applyPaper(res.data))
-      .catch((err) => setError(err.response?.data?.message || "Paper load nahi hua"))
+      .catch((err) => setError(err.response?.data?.message || "Couldn't load this paper."))
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Status, tags, notes backend pe bhejo
-  const update = async (changes, successMsg) => {
+  const update = async (changes, { showSaved = false } = {}) => {
     setError("");
-    setMessage("");
+    setSaved(false);
     setSaving(true);
     try {
       const { data } = await api.put(`/papers/${id}`, changes);
       applyPaper(data);
-      setMessage(successMsg);
+      if (showSaved) setSaved(true);
     } catch (err) {
-      setError(err.response?.data?.message || "Save nahi hua");
+      setError(err.response?.data?.message || "Couldn't save your changes. Try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  // AI summary banao (refresh = true → nayi summary)
   const handleSummary = async (refresh = false) => {
     setError("");
-    setMessage("");
     setSummarizing(true);
     try {
       const { data } = await api.post(`/papers/${id}/summary`, null, {
@@ -67,157 +67,190 @@ export default function PaperDetail() {
       });
       applyPaper(data);
     } catch (err) {
-      setError(err.response?.data?.message || "Summary nahi ban payi");
+      setError(err.response?.data?.message || "Couldn't generate a summary. Try again in a minute.");
     } finally {
       setSummarizing(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Ye paper delete karna hai? Ye wapas nahi aayega.")) return;
+    if (!window.confirm("Delete this paper? Your notes and summary will be deleted too.")) return;
     try {
       await api.delete(`/papers/${id}`);
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Delete nahi hua");
+      setError(err.response?.data?.message || "Couldn't delete the paper. Try again.");
     }
   };
 
-  if (loading) return <p className="p-6 text-gray-500">Loading...</p>;
-
-  if (!paper) {
+  // Loading skeleton
+  if (loading) {
     return (
-      <div className="max-w-3xl mx-auto p-6">
-        <p className="text-red-600 mb-4">{error}</p>
-        <Link to="/" className="text-blue-600">← Dashboard pe wapas</Link>
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:py-12" aria-busy="true">
+        <div className="h-4 w-24 rounded bg-rule motion-safe:animate-pulse" />
+        <div className="mt-8 h-9 w-5/6 rounded bg-rule motion-safe:animate-pulse" />
+        <div className="mt-4 h-4 w-1/2 rounded bg-rule motion-safe:animate-pulse" />
       </div>
     );
   }
 
-  // Tags ya notes badle hain? Tabhi Save button chalu ho
+  // Paper nahi mila
+  if (!paper) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
+        <BackLink />
+        <h1 className="mt-8 font-serif text-3xl">Paper not found</h1>
+        <p className="mt-2 text-ink-soft">{error || "It may have been deleted, or the link is wrong."}</p>
+      </div>
+    );
+  }
+
   const isDirty = tags !== paper.tags.join(", ") || notes !== (paper.notes || "");
+  const added = new Date(paper.createdAt).toLocaleDateString("en-IN", {
+    day: "numeric", month: "long", year: "numeric",
+  });
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <Link to="/" className="text-sm text-blue-600">← All papers</Link>
+    <article className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:py-12">
+      <BackLink />
 
       {/* Header */}
-      <div className="bg-white border rounded-lg p-5">
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-semibold">{paper.title}</h1>
-          <StatusBadge status={paper.status} />
-        </div>
+      <header className="mt-6">
+        <h1 className="font-serif text-3xl leading-tight sm:text-4xl">
+          <span className={paper.status === "reading" ? "highlight" : ""}>{paper.title}</span>
+        </h1>
         {paper.authors.length > 0 && (
-          <p className="text-gray-600 mt-2">{paper.authors.join(", ")}</p>
+          <p className="mt-3 leading-relaxed text-ink-soft">{paper.authors.join(", ")}</p>
         )}
-        <div className="flex flex-wrap gap-4 mt-3 text-sm">
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
           {paper.arxivId && (
             <a href={`https://arxiv.org/abs/${paper.arxivId}`} target="_blank" rel="noreferrer"
-              className="text-blue-600 underline">arXiv: {paper.arxivId}</a>
+              className="inline-flex items-center gap-1.5 text-pen hover:underline">
+              <ExternalLink size={14} aria-hidden="true" />
+              arXiv {paper.arxivId}
+            </a>
           )}
           {paper.pdfUrl && (
             <a href={paper.pdfUrl} target="_blank" rel="noreferrer"
-              className="text-blue-600 underline">📄 PDF</a>
+              className="inline-flex items-center gap-1.5 text-pen hover:underline">
+              <FileText size={14} aria-hidden="true" />
+              Read PDF
+            </a>
           )}
-          <span className="text-gray-400">
-            Added {new Date(paper.createdAt).toLocaleDateString("en-IN")}
-          </span>
+          <span className="text-ink-soft">Added {added}</span>
         </div>
-      </div>
+      </header>
 
-      {/* Status: click karte hi save */}
-      <div className="bg-white border rounded-lg p-5">
-        <h2 className="font-medium mb-3">Status</h2>
-        <div className="flex gap-2">
-          {STATUSES.map((s) => (
+      {/* Status */}
+      <div className="mt-8 inline-flex flex-wrap gap-1 rounded-md border border-rule bg-white p-1" role="group" aria-label="Reading status">
+        {STATUSES.map((s) => {
+          const active = paper.status === s;
+          return (
             <button
-              key={s.key}
-              disabled={saving || paper.status === s.key}
-              onClick={() => update({ status: s.key }, "Status update ho gaya ✓")}
-              className={`px-3 py-1.5 rounded-md text-sm border ${
-                paper.status === s.key ? "bg-blue-600 text-white border-blue-600" : "bg-white hover:bg-gray-50"
+              key={s}
+              onClick={() => update({ status: s })}
+              disabled={saving || active}
+              aria-pressed={active}
+              className={`rounded px-3 py-1.5 transition-colors disabled:cursor-default ${
+                active ? "bg-paper shadow-sm" : "hover:bg-paper/60"
               }`}
             >
-              {s.label}
+              <StatusBadge status={s} />
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
+
+      {error && <p className="alert-error mt-6" role="alert">{error}</p>}
 
       {/* Abstract */}
       {paper.abstract && (
-        <div className="bg-white border rounded-lg p-5">
-          <h2 className="font-medium mb-2">Abstract</h2>
-          <p className="text-gray-700 leading-relaxed whitespace-pre-line">{paper.abstract}</p>
-        </div>
+        <section className="mt-10 border-t border-rule pt-8">
+          <h2 className="text-center font-serif text-lg font-semibold">Abstract</h2>
+          <p className="mx-auto mt-3 max-w-prose font-serif text-[1.0625rem] leading-relaxed text-ink/90">
+            {paper.abstract}
+          </p>
+        </section>
       )}
 
-      {/* AI Summary */}
-      <div className="bg-white border rounded-lg p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-medium">✨ AI Summary</h2>
+      {/* AI summary */}
+      <section className="mt-10 rounded-r-lg border-l-2 border-pen bg-white p-5 sm:p-6">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="inline-flex items-center gap-2 font-medium">
+            <Sparkles size={16} className="text-pen" aria-hidden="true" />
+            AI summary
+          </h2>
           {paper.summary && (
             <button
               onClick={() => handleSummary(true)}
               disabled={summarizing}
-              className="text-sm text-blue-600 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-sm text-ink-soft hover:text-ink disabled:opacity-50"
             >
-              {summarizing ? "Generating..." : "↻ Regenerate"}
+              <RefreshCw size={14} className={summarizing ? "motion-safe:animate-spin" : ""} aria-hidden="true" />
+              {summarizing ? "Regenerating..." : "Regenerate"}
             </button>
           )}
         </div>
 
         {paper.summary ? (
-          <p className="text-gray-700 leading-relaxed whitespace-pre-line">{paper.summary}</p>
+          <>
+            <p className="mt-3 whitespace-pre-line leading-relaxed text-ink/90">{paper.summary}</p>
+            <p className="mt-4 text-xs text-ink-soft">
+              Generated from the abstract. Check important details against the paper.
+            </p>
+          </>
         ) : !paper.abstract ? (
-          <p className="text-sm text-gray-500">
-            Summary ke liye abstract chahiye. arXiv se add kiye papers mein ye apne aap hota hai.
+          <p className="mt-3 text-sm text-ink-soft">
+            A summary needs an abstract. Papers imported from arXiv include one.
           </p>
         ) : (
-          <button
-            onClick={() => handleSummary(false)}
-            disabled={summarizing}
-            className="bg-purple-600 text-white px-4 py-2 rounded-md disabled:opacity-50"
-          >
-            {summarizing ? "Generating... (10–20 sec)" : "✨ Generate summary"}
-          </button>
+          <>
+            <p className="mt-3 text-sm text-ink-soft">
+              Get the main idea, key contributions and why the paper matters.
+            </p>
+            <button onClick={() => handleSummary(false)} disabled={summarizing} className="btn btn-primary mt-4">
+              <Sparkles size={16} aria-hidden="true" />
+              {summarizing ? "Generating summary..." : "Generate summary"}
+            </button>
+          </>
         )}
-      </div>
+      </section>
 
-      {/* Tags + Notes: Save button se */}
-      <div className="bg-white border rounded-lg p-5 space-y-4">
+      {/* Notes */}
+      <section className="mt-10 space-y-5 border-t border-rule pt-8">
+        <h2 className="font-serif text-xl">Your notes</h2>
         <div>
-          <label className="block font-medium mb-1">Tags (comma se alag)</label>
-          <input value={tags} onChange={(e) => setTags(e.target.value)}
-            className="w-full border rounded-md px-3 py-2" placeholder="ai, transformers" />
+          <label htmlFor="tags" className="label">Tags</label>
+          <input id="tags" value={tags} onChange={(e) => { setTags(e.target.value); setSaved(false); }}
+            placeholder="transformers, nlp" className="field" />
         </div>
         <div>
-          <label className="block font-medium mb-1">Notes</label>
-          <textarea rows={6} value={notes} onChange={(e) => setNotes(e.target.value)}
-            className="w-full border rounded-md px-3 py-2" placeholder="Is paper ke baare mein apne notes..." />
+          <label htmlFor="notes" className="label">Notes</label>
+          <textarea id="notes" rows={8} value={notes}
+            onChange={(e) => { setNotes(e.target.value); setSaved(false); }}
+            placeholder="Key ideas, questions, how it connects to your work..."
+            className="field leading-relaxed" />
         </div>
         <div className="flex items-center gap-3">
           <button
+            onClick={() => update({ tags: splitList(tags), notes }, { showSaved: true })}
             disabled={!isDirty || saving}
-            onClick={() => update({ tags: splitList(tags), notes }, "Changes save ho gaye ✓")}
-            className="bg-blue-600 text-white px-5 py-2 rounded-md disabled:opacity-40"
+            className="btn btn-primary"
           >
-            {saving ? "Saving..." : "Save changes"}
+            {saving ? "Saving..." : "Save notes"}
           </button>
-          {message && <span className="text-sm text-green-700">{message}</span>}
+          <span className="text-sm text-ink-soft" role="status">{saved && !isDirty ? "Saved" : ""}</span>
         </div>
-      </div>
-
-      {error && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>}
+      </section>
 
       {/* Delete */}
-      <div className="border border-red-200 rounded-lg p-5">
-        <h2 className="font-medium text-red-700 mb-2">Danger zone</h2>
-        <button onClick={handleDelete}
-          className="text-sm border border-red-600 text-red-600 px-4 py-2 rounded-md hover:bg-red-50">
+      <section className="mt-12 flex flex-col gap-3 border-t border-rule pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-ink-soft">Deleting removes this paper, your notes and its summary.</p>
+        <button onClick={handleDelete} className="btn btn-danger">
+          <Trash2 size={16} aria-hidden="true" />
           Delete paper
         </button>
-      </div>
-    </div>
+      </section>
+    </article>
   );
 }
