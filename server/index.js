@@ -7,7 +7,11 @@ import paperRoutes from "./routes/paperRoutes.js";   // baaki imports ke saath
 import arxivRoutes from "./routes/arxivRoutes.js";   // baaki imports ke saath
 
 const app = express();
-app.use(cors());
+const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
+  .split(",")
+  .map((url) => url.trim());
+
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 app.get("/", (req, res) => res.send("API running 🚀"));
