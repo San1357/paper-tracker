@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-/* Colors aur fonts: ab "bg-paper", "text-ink", "font-serif" jaisi classes kaam karengi */
 @theme {
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Source Serif 4", Georgia, serif;
@@ -21,7 +20,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Keyboard se navigate karne walon ke liye saaf focus ring */
+/* Text select karo to highlighter jaisa dikhe */
+::selection {
+  background: rgb(255 228 92 / 0.7);
+  color: var(--color-ink);
+}
+
 :focus-visible {
   outline: 2px solid var(--color-pen);
   outline-offset: 2px;
@@ -32,7 +36,7 @@ body {
     @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply bg-pen text-white hover:bg-pen-dark;
+    @apply bg-pen text-white shadow-sm hover:bg-pen-dark;
   }
   .btn-secondary {
     @apply border border-rule bg-white text-ink hover:bg-paper;
@@ -52,16 +56,46 @@ body {
   .alert-error {
     @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800;
   }
+  .kbd {
+    @apply rounded border border-rule bg-paper px-1.5 py-0.5 text-xs font-medium text-ink-soft;
+  }
 }
 
-/* Highlighter: text ke neeche wale hisse pe peela marker */
-.highlight {
-  background-image: linear-gradient(transparent 58%, rgb(255 228 92 / 0.85) 58%);
+/* Highlighter: left se right "chalta" hai */
+.highlight,
+.highlight-dark {
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+  animation: highlight-sweep 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.highlight {
+  background-image: linear-gradient(transparent 58%, rgb(255 228 92 / 0.85) 58%);
 }
 .highlight-dark {
   background-image: linear-gradient(transparent 70%, rgb(255 228 92 / 0.45) 70%);
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
+}
+@keyframes highlight-sweep {
+  from {
+    background-size: 0% 100%;
+  }
+}
+
+/* Graph paper jaisa dot grid */
+.graph-paper {
+  background-image: radial-gradient(rgb(27 35 64 / 0.09) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+.graph-paper-dark {
+  background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* "Reduce motion" on ho to animation band */
+@media (prefers-reduced-motion: reduce) {
+  .highlight,
+  .highlight-dark {
+    animation: none;
+  }
 }

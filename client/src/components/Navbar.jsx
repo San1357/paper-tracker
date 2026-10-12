@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpenText, Plus, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -5,7 +6,16 @@ import { useAuth } from "../context/AuthContext";
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [scrolled, setScrolled] = useState(false);
   const initial = user?.name?.[0]?.toUpperCase() || "?";
+
+  // Scroll karne pe navbar ke neeche halki shadow
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 4);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -13,7 +23,11 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-10 border-b border-rule bg-paper/90 backdrop-blur">
+    <header
+      className={`sticky top-0 z-20 border-b border-rule bg-paper/85 backdrop-blur-md transition-shadow ${
+        scrolled ? "shadow-[0_1px_16px_rgb(27_35_64/0.08)]" : ""
+      }`}
+    >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 font-serif text-xl text-ink">
           <BookOpenText size={22} className="text-pen" aria-hidden="true" />
@@ -28,7 +42,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-2 border-l border-rule pl-3">
             <span
-              className="grid h-8 w-8 place-items-center rounded-full bg-pen/10 text-sm font-semibold text-pen"
+              className="grid h-8 w-8 place-items-center rounded-full bg-ink font-serif text-sm text-white"
               aria-hidden="true"
             >
               {initial}

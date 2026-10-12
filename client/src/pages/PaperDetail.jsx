@@ -167,7 +167,7 @@ export default function PaperDetail() {
       {paper.abstract && (
         <section className="mt-10 border-t border-rule pt-8">
           <h2 className="text-center font-serif text-lg font-semibold">Abstract</h2>
-          <p className="mx-auto mt-3 max-w-prose font-serif text-[1.0625rem] leading-relaxed text-ink/90">
+          <p className="mx-auto mt-3 max-w-prose font-serif text-[1.0625rem] leading-relaxed text-ink/90 first-letter:float-left first-letter:mr-2 first-letter:mt-1 first-letter:font-serif first-letter:text-5xl first-letter:font-semibold first-letter:leading-[0.8] first-letter:text-pen">
             {paper.abstract}
           </p>
         </section>

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import api from "../api";
+import { useAuth } from "../context/AuthContext";
 import PaperCard from "../components/PaperCard";
 
 const STATUS_FILTERS = [
@@ -11,7 +12,23 @@ const STATUS_FILTERS = [
   { key: "done", label: "Done" },
 ];
 
+const RIBBON = [
+  { key: "done", label: "done", className: "bg-pen" },
+  { key: "reading", label: "reading", className: "bg-highlight" },
+  { key: "to-read", label: "to read", className: "bg-ink-soft/25" },
+];
+
+const greeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
+
 export default function Dashboard() {
+  const { user } = useAuth();
+  const searchRef = useRef(null);
+
   const [papers, setPapers] = useState([]);
   const [allTags, setAllTags] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +39,6 @@ export default function Dashboard() {
   const [tag, setTag] = useState("");
   const [status, setStatus] = useState("all");
 
-  // Typing rukne ke 300ms baad search
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 300);
     return () => clearTimeout(timer);
@@ -46,16 +62,68 @@ export default function Dashboard() {
     return () => { ignore = true; };
   }, [debouncedSearch, tag]);
 
+  // "/" dabao → search pe focus (agar kahin type nahi kar rahe)
+  useEffect(() => {
+    const onKey = (e) => {
+      const t = e.target;
+      const typing = t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable;
+      if (e.key === "/" && !typing) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const countFor = (key) =>
     key === "all" ? papers.length : papers.filter((p) => p.status === key).length;
   const visible = status === "all" ? papers : papers.filter((p) => p.status === status);
   const hasQuery = Boolean(debouncedSearch || tag);
   const isFiltered = hasQuery || status !== "all";
+  const firstName = user?.name?.split(" ")[0];
 
   const clearFilters = () => {
     setSearch("");
     setTag("");
     setStatus("all");
+  };
+
+  const renderSummary = () => {
+    if (loading || error) return null;
+    if (hasQuery) {
+      return (
+        <p className="mt-4 text-ink-soft">
+          {papers.length} {papers.length === 1 ? "paper matches" : "papers match"} your search
+        </p>
+      );
+    }
+    if (papers.length === 0) return null;
+
+    const total = papers.length;
+    return (
+      <div className="mt-6 max-w-xl">
+        <div
+          className="flex h-2 gap-0.5 overflow-hidden rounded-full"
+          role="img"
+          aria-label={RIBBON.map((r) => `${countFor(r.key)} ${r.label}`).join(", ")}
+        >
+          {RIBBON.map((r) =>
+            countFor(r.key) > 0 ? (
+              <div key={r.key} className={r.className} style={{ width: `${(countFor(r.key) / total) * 100}%` }} />
+            ) : null
+          )}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-soft">
+          {RIBBON.map((r) => (
+            <span key={r.key} className="inline-flex items-center gap-2">
+              <span className={`h-2 w-2 rounded-full ${r.className}`} aria-hidden="true" />
+              {countFor(r.key)} {r.label}
+            </span>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const renderList = () => {
@@ -105,96 +173,107 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-12">
-      <div className="mb-8">
-        <h1 className="font-serif text-3xl sm:text-4xl">Reading list</h1>
-        {!loading && !error && (
-          <p className="mt-1 text-ink-soft">
-            {papers.length} {papers.length === 1 ? "paper" : "papers"}
-            {hasQuery ? " match your search" : " saved"}
-          </p>
-        )}
+    <div>
+      {/* Header band: graph paper */}
+      <div className="graph-paper border-b border-rule">
+        <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
+          {firstName && <p className="text-ink-soft">{greeting()}, {firstName}</p>}
+          <h1 className="mt-1 font-serif text-4xl tracking-tight sm:text-5xl">Reading list</h1>
+          {renderSummary()}
+        </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[13rem_1fr] lg:gap-12">
-        {/* Sidebar: filters */}
-        <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
-          <section>
-            <h2 className="mb-2 text-sm font-medium text-ink-soft">Status</h2>
-            <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-0.5 lg:pb-0">
-              {STATUS_FILTERS.map((f) => {
-                const active = status === f.key;
-                return (
-                  <li key={f.key}>
-                    <button
-                      onClick={() => setStatus(f.key)}
-                      aria-pressed={active}
-                      className={`flex w-full items-center justify-between gap-3 whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors ${
-                        active
-                          ? "bg-white font-medium text-ink shadow-[inset_2px_0_0_var(--color-pen)]"
-                          : "text-ink-soft hover:bg-white/70 hover:text-ink"
-                      }`}
-                    >
-                      <span>{f.label}</span>
-                      <span className="text-xs tabular-nums text-ink-soft">{countFor(f.key)}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-
-          {allTags.length > 0 && (
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
+        <div className="grid gap-8 lg:grid-cols-[13rem_1fr] lg:gap-12">
+          {/* Sidebar */}
+          <aside className="space-y-8 lg:sticky lg:top-24 lg:self-start">
             <section>
-              <h2 className="mb-2 text-sm font-medium text-ink-soft">Tags</h2>
-              <div className="flex flex-wrap gap-x-3 gap-y-1.5">
-                {allTags.map((t) => {
-                  const active = tag === t;
+              <h2 className="mb-2 text-sm font-medium text-ink-soft">Status</h2>
+              <ul className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:gap-0.5 lg:pb-0">
+                {STATUS_FILTERS.map((f) => {
+                  const active = status === f.key;
                   return (
-                    <button
-                      key={t}
-                      onClick={() => setTag(active ? "" : t)}
-                      aria-pressed={active}
-                      className={`text-sm ${
-                        active ? "font-medium text-pen underline underline-offset-4" : "text-ink-soft hover:text-ink"
-                      }`}
-                    >
-                      #{t}
-                    </button>
+                    <li key={f.key}>
+                      <button
+                        onClick={() => setStatus(f.key)}
+                        aria-pressed={active}
+                        className={`flex w-full items-center justify-between gap-3 whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors ${
+                          active
+                            ? "bg-white font-medium text-ink shadow-[inset_2px_0_0_var(--color-pen)]"
+                            : "text-ink-soft hover:bg-white/70 hover:text-ink"
+                        }`}
+                      >
+                        <span>{f.label}</span>
+                        <span className="text-xs tabular-nums text-ink-soft">{countFor(f.key)}</span>
+                      </button>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </section>
-          )}
 
-          {isFiltered && (
-            <button onClick={clearFilters} className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink">
-              <X size={14} aria-hidden="true" />
-              Clear filters
-            </button>
-          )}
-        </aside>
+            {allTags.length > 0 && (
+              <section>
+                <h2 className="mb-2 text-sm font-medium text-ink-soft">Tags</h2>
+                <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+                  {allTags.map((t) => {
+                    const active = tag === t;
+                    return (
+                      <button
+                        key={t}
+                        onClick={() => setTag(active ? "" : t)}
+                        aria-pressed={active}
+                        className={`text-sm ${
+                          active ? "font-medium text-pen underline underline-offset-4" : "text-ink-soft hover:text-ink"
+                        }`}
+                      >
+                        #{t}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
 
-        {/* Main: search + list */}
-        <section>
-          <label htmlFor="search" className="sr-only">Search papers</label>
-          <div className="relative mb-4">
-            <Search
-              size={18}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft"
-              aria-hidden="true"
-            />
-            <input
-              id="search"
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search titles, authors, abstracts and notes"
-              className="field py-2.5 pl-10"
-            />
-          </div>
-          {renderList()}
-        </section>
+            {isFiltered && (
+              <button onClick={clearFilters} className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink">
+                <X size={14} aria-hidden="true" />
+                Clear filters
+              </button>
+            )}
+          </aside>
+
+          {/* Search + list */}
+          <section>
+            <label htmlFor="search" className="sr-only">Search papers</label>
+            <div className="relative mb-4">
+              <Search
+                size={18}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft"
+                aria-hidden="true"
+              />
+              <input
+                ref={searchRef}
+                id="search"
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setSearch("");
+                    e.currentTarget.blur();
+                  }
+                }}
+                placeholder="Search titles, authors, abstracts and notes"
+                className="field py-2.5 pl-10 pr-12"
+              />
+              {!search && (
+                <kbd className="kbd pointer-events-none absolute right-3 top-1/2 hidden -translate-y-1/2 sm:inline">/</kbd>
+              )}
+            </div>
+            {renderList()}
+          </section>
+        </div>
       </div>
     </div>
   );
