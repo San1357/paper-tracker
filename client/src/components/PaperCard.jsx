@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import StatusBadge from "./StatusBadge";
+import { tagColor } from "../utils/tagColor";
 
 const shortAuthors = (authors = []) =>
   authors.length > 3 ? `${authors.slice(0, 3).join(", ")} et al.` : authors.join(", ");
@@ -35,7 +36,7 @@ export default function PaperCard({ paper }) {
           {(paper.tags.length > 0 || paper.summary) && (
             <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
               {paper.tags.map((tag) => (
-                <span key={tag} className="text-pen">#{tag}</span>
+                <span key={tag} className={`tag-chip ${tagColor(tag)}`}>#{tag}</span>
               ))}
               {paper.summary && (
                 <span className="inline-flex items-center gap-1 text-ink-soft">
@@ -48,7 +49,7 @@ export default function PaperCard({ paper }) {
         </div>
 
         <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:gap-1">
-          <StatusBadge status={paper.status} />
+          <StatusBadge status={paper.status} pill />
           <span className="text-xs text-ink-soft">Added {added}</span>
         </div>
       </Link>

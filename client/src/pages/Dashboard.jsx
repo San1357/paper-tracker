@@ -4,6 +4,7 @@ import { Search, X } from "lucide-react";
 import api from "../api";
 import { useAuth } from "../context/AuthContext";
 import PaperCard from "../components/PaperCard";
+import { tagColor } from "../utils/tagColor";
 
 const STATUS_FILTERS = [
   { key: "all", label: "All papers" },
@@ -175,7 +176,7 @@ export default function Dashboard() {
   return (
     <div>
       {/* Header band: graph paper */}
-      <div className="graph-paper border-b border-rule">
+      <div className="aurora border-b border-rule">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:py-14">
           {firstName && <p className="text-ink-soft">{greeting()}, {firstName}</p>}
           <h1 className="mt-1 font-serif text-4xl tracking-tight sm:text-5xl">Reading list</h1>
@@ -199,8 +200,8 @@ export default function Dashboard() {
                         aria-pressed={active}
                         className={`flex w-full items-center justify-between gap-3 whitespace-nowrap rounded-md px-3 py-1.5 text-sm transition-colors ${
                           active
-                            ? "bg-white font-medium text-ink shadow-[inset_2px_0_0_var(--color-pen)]"
-                            : "text-ink-soft hover:bg-white/70 hover:text-ink"
+                            ? "bg-pen-50 font-medium text-pen shadow-[inset_2px_0_0_var(--color-pen)]"
+                            : "text-ink-soft hover:bg-white hover:text-ink"
                         }`}
                       >
                         <span>{f.label}</span>
@@ -223,9 +224,9 @@ export default function Dashboard() {
                         key={t}
                         onClick={() => setTag(active ? "" : t)}
                         aria-pressed={active}
-                        className={`text-sm ${
-                          active ? "font-medium text-pen underline underline-offset-4" : "text-ink-soft hover:text-ink"
-                        }`}
+                        className={`tag-chip transition-shadow ${tagColor(t)} ${
+                        active ? "ring-2 ring-pen ring-offset-1 ring-offset-paper" : "hover:ring-1 hover:ring-black/10"
+                      }`}
                       >
                         #{t}
                       </button>

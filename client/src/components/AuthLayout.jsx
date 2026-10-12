@@ -13,7 +13,7 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.15fr_1fr]">
       {/* Left panel */}
-      <aside className="graph-paper-dark relative hidden flex-col justify-between overflow-hidden bg-ink p-12 text-white lg:flex">
+      <aside className="aurora-dark  relative hidden flex-col justify-between overflow-hidden bg-ink p-12 text-white lg:flex">
         <Wordmark />
 
         <div className="mx-auto w-full max-w-md">

@@ -9,6 +9,8 @@
   --color-ink-soft: #5b6478;
   --color-pen: #2b4acb;
   --color-pen-dark: #1f37a0;
+  --color-pen-50: #eef1fd;
+  --color-violet: #7c5cff;
   --color-rule: #dde1e8;
   --color-highlight: #ffe45c;
 }
@@ -20,7 +22,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Text select karo to highlighter jaisa dikhe */
 ::selection {
   background: rgb(255 228 92 / 0.7);
   color: var(--color-ink);
@@ -33,13 +34,21 @@ body {
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply bg-pen text-white shadow-sm hover:bg-pen-dark;
+    @apply text-white;
+    background-image: linear-gradient(180deg, #4062e6, var(--color-pen));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.2),
+      0 1px 2px rgb(27 35 64 / 0.2),
+      0 6px 16px -6px rgb(43 74 203 / 0.6);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-image: linear-gradient(180deg, var(--color-pen), var(--color-pen-dark));
   }
   .btn-secondary {
-    @apply border border-rule bg-white text-ink hover:bg-paper;
+    @apply border border-rule bg-white text-ink shadow-sm hover:bg-pen-50;
   }
   .btn-danger {
     @apply border border-red-300 bg-white text-red-700 hover:bg-red-50;
@@ -48,7 +57,7 @@ body {
     @apply w-full rounded-md border border-rule bg-white px-3 py-2 text-ink transition-colors placeholder:text-ink-soft/60;
   }
   .field:focus {
-    @apply border-pen outline-none ring-2 ring-pen/15;
+    @apply border-pen outline-none ring-4 ring-pen/10;
   }
   .label {
     @apply mb-1.5 block text-sm font-medium text-ink;
@@ -57,11 +66,14 @@ body {
     @apply rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800;
   }
   .kbd {
-    @apply rounded border border-rule bg-paper px-1.5 py-0.5 text-xs font-medium text-ink-soft;
+    @apply rounded border border-rule bg-white px-1.5 py-0.5 text-xs font-medium text-ink-soft;
+  }
+  .tag-chip {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 }
 
-/* Highlighter: left se right "chalta" hai */
+/* Highlighter sweep */
 .highlight,
 .highlight-dark {
   background-repeat: no-repeat;
@@ -74,7 +86,7 @@ body {
   background-image: linear-gradient(transparent 58%, rgb(255 228 92 / 0.85) 58%);
 }
 .highlight-dark {
-  background-image: linear-gradient(transparent 70%, rgb(255 228 92 / 0.45) 70%);
+  background-image: linear-gradient(transparent 70%, rgb(255 228 92 / 0.5) 70%);
 }
 @keyframes highlight-sweep {
   from {
@@ -82,17 +94,28 @@ body {
   }
 }
 
-/* Graph paper jaisa dot grid */
-.graph-paper {
-  background-image: radial-gradient(rgb(27 35 64 / 0.09) 1px, transparent 1px);
-  background-size: 18px 18px;
-}
-.graph-paper-dark {
-  background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px);
-  background-size: 18px 18px;
+/* Aurora: halke rangeen glow + dot grid (light) */
+.aurora {
+  background-color: var(--color-paper);
+  background-image:
+    radial-gradient(rgb(27 35 64 / 0.07) 1px, transparent 1px),
+    radial-gradient(42rem 20rem at 8% -10%, rgb(43 74 203 / 0.18), transparent 70%),
+    radial-gradient(34rem 18rem at 88% 0%, rgb(124 92 255 / 0.16), transparent 70%),
+    radial-gradient(30rem 16rem at 55% 115%, rgb(255 228 92 / 0.28), transparent 70%);
+  background-size: 18px 18px, auto, auto, auto;
 }
 
-/* "Reduce motion" on ho to animation band */
+/* Aurora on navy (login panel) */
+.aurora-dark {
+  background-color: var(--color-ink);
+  background-image:
+    radial-gradient(rgb(255 255 255 / 0.06) 1px, transparent 1px),
+    radial-gradient(36rem 26rem at 15% 20%, rgb(64 98 230 / 0.45), transparent 70%),
+    radial-gradient(30rem 24rem at 90% 75%, rgb(124 92 255 / 0.4), transparent 70%),
+    radial-gradient(22rem 16rem at 60% 105%, rgb(255 228 92 / 0.18), transparent 70%);
+  background-size: 18px 18px, auto, auto, auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .highlight,
   .highlight-dark {

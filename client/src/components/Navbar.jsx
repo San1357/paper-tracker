@@ -42,7 +42,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-2 border-l border-rule pl-3">
             <span
-              className="grid h-8 w-8 place-items-center rounded-full bg-ink font-serif text-sm text-white"
+              className="grid h-8 w-8 place-items-center rounded-full bg-linear-to-br from-pen to-violet font-serif text-sm text-white"
               aria-hidden="true"
             >
               {initial}

@@ -115,7 +115,7 @@ export default function PaperDetail() {
       <BackLink />
 
       {/* Header */}
-      <header className="mt-6">
+      <header className="aurora mt-6 rounded-2xl border border-white/70 p-6 shadow-sm sm:p-8">
         <h1 className="font-serif text-3xl leading-tight sm:text-4xl">
           <span className={paper.status === "reading" ? "highlight" : ""}>{paper.title}</span>
         </h1>
@@ -174,7 +174,7 @@ export default function PaperDetail() {
       )}
 
       {/* AI summary */}
-      <section className="mt-10 rounded-r-lg border-l-2 border-pen bg-white p-5 sm:p-6">
+      <section className="mt-10 rounded-xl border border-pen/15 bg-linear-to-br from-pen-50 via-white to-violet-50 p-5 shadow-sm sm:p-6">
         <div className="flex items-center justify-between gap-4">
           <h2 className="inline-flex items-center gap-2 font-medium">
             <Sparkles size={16} className="text-pen" aria-hidden="true" />
